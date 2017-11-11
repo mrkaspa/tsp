@@ -35,6 +35,7 @@ func (a ByScore) Len() int           { return len(a) }
 func (a ByScore) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
 func (a ByScore) Less(i, j int) bool { return a[i].score < a[j].score }
 
+/* calculateScore calculates the score for a given way*/
 func (i *Individual) calculateScore(cities *[]Point) {
 	i.score = 0
 	for idx, k := range i.way {
@@ -146,6 +147,9 @@ func (e *Env) calcDistances() {
 	}
 }
 
+/* calcScore calculates the score for all the population
+and sorts the population by score
+*/
 func (e *Env) calcScore() {
 	e.populationScore = 0
 	for i := range e.population {
@@ -162,6 +166,7 @@ func (e *Env) doCrossover() {
 		children := make([]Individual, 0)
 		//fmt.Printf("Adding %d new children\n", crossover_count * 2)
 
+		// generates children
 		for i := 0; i < crossoverCount; i++ {
 			var p1 int
 			var p2 int
@@ -177,14 +182,16 @@ func (e *Env) doCrossover() {
 		for i := range children {
 			children[i].calculateScore(&e.cities)
 		}
-
+		// selects some children for the population
 		for _, v := range children {
 			addMeScore := 0.5
 			randomScore := rand.Float64()
 			for j := range e.population {
-				addMeScore += (e.population[len(e.population)-1-j].score / e.populationScore)
+				minusJPosition := len(e.population) - 1 - j
+				minusJScore := e.population[minusJPosition].score
+				addMeScore += (minusJScore / e.populationScore)
 				if addMeScore < 1-randomScore {
-					e.population[len(e.population)-1-j] = v
+					e.population[minusJPosition] = v
 					break
 				}
 			}
@@ -194,6 +201,7 @@ func (e *Env) doCrossover() {
 	}
 }
 
+// mutates a random element in a random route
 func (e *Env) doMutation() {
 	rand.Seed(time.Now().UTC().UnixNano())
 	if rand.Float64() < e.mutationChance {
@@ -295,7 +303,7 @@ func main() {
 	points := loadPoints()
 
 	env := Env{
-		maxGenerations:      3000,
+		maxGenerations:      9000,
 		crossoverChance:     0.95,
 		mutationChance:      0.4,
 		chooseBestChange:    0.95,
